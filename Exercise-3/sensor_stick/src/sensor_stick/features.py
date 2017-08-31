@@ -28,19 +28,27 @@ def compute_color_histograms(cloud, using_hsv=False):
     channel_2_vals = []
     channel_3_vals = []
 
+    nbins = 32
+    bins_range = (0, 256)
+
     for color in point_colors_list:
         channel_1_vals.append(color[0])
         channel_2_vals.append(color[1])
         channel_3_vals.append(color[2])
-    
+
     # TODO: Compute histograms
+    ch1_hist = np.histogram(channel_1_vals, bins=nbins, range=bins_range)
+    ch2_hist = np.histogram(channel_2_vals, bins=nbins, range=bins_range)
+    ch3_hist = np.histogram(channel_3_vals, bins=nbins, range=bins_range)
 
     # TODO: Concatenate and normalize the histograms
+    hist_features = np.concatenate((ch1_hist[0], ch2_hist[0], ch3_hist[0]))
+    normed_features = hist_features / np.sum(hist_features)
 
-    # Generate random features for demo mode.  
+    # Generate random features for demo mode.
     # Replace normed_features with your feature vector
-    normed_features = np.random.random(96) 
-    return normed_features 
+    # normed_features = np.random.random(96)
+    return normed_features
 
 
 def compute_normal_histograms(normal_cloud):
@@ -55,12 +63,20 @@ def compute_normal_histograms(normal_cloud):
         norm_y_vals.append(norm_component[1])
         norm_z_vals.append(norm_component[2])
 
+    nbins = 32
+    bins_range = (0, 256)
+
     # TODO: Compute histograms of normal values (just like with color)
+    ch1_hist = np.histogram(norm_x_vals, bins=nbins, range=bins_range)
+    ch2_hist = np.histogram(norm_y_vals, bins=nbins, range=bins_range)
+    ch3_hist = np.histogram(norm_z_vals, bins=nbins, range=bins_range)
 
     # TODO: Concatenate and normalize the histograms
+    hist_features = np.concatenate((ch1_hist[0], ch2_hist[0], ch3_hist[0]))
+    normed_features = hist_features / np.sum(hist_features)
 
-    # Generate random features for demo mode.  
+    # Generate random features for demo mode.
     # Replace normed_features with your feature vector
-    normed_features = np.random.random(96)
+    # normed_features = np.random.random(96)
 
     return normed_features
