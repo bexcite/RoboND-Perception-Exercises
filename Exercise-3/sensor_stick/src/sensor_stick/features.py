@@ -1,7 +1,15 @@
+from __future__ import division
 import matplotlib.colors
 import matplotlib.pyplot as plt
 import numpy as np
 from pcl_helper import *
+import rospy
+from sensor_stick.srv import GetNormals
+
+
+def get_normals(cloud):
+    get_normals_prox = rospy.ServiceProxy('/feature_extractor/get_normals', GetNormals)
+    return get_normals_prox(cloud).cluster
 
 
 def rgb_to_hsv(rgb_list):
@@ -28,7 +36,7 @@ def compute_color_histograms(cloud, using_hsv=False):
     channel_2_vals = []
     channel_3_vals = []
 
-    nbins = 32
+    nbins = 12
     bins_range = (0, 256)
 
     for color in point_colors_list:
@@ -36,14 +44,23 @@ def compute_color_histograms(cloud, using_hsv=False):
         channel_2_vals.append(color[1])
         channel_3_vals.append(color[2])
 
+
+
     # TODO: Compute histograms
     ch1_hist = np.histogram(channel_1_vals, bins=nbins, range=bins_range)
     ch2_hist = np.histogram(channel_2_vals, bins=nbins, range=bins_range)
     ch3_hist = np.histogram(channel_3_vals, bins=nbins, range=bins_range)
 
+
+
     # TODO: Concatenate and normalize the histograms
     hist_features = np.concatenate((ch1_hist[0], ch2_hist[0], ch3_hist[0]))
+    # print('hist_features = ', hist_features)
+    # print('sum = ', np.sum(hist_features))
     normed_features = hist_features / np.sum(hist_features)
+    # print('div = ', 1.0 * hist_features / np.sum(hist_features))
+
+    # print('color features = ', normed_features)
 
     # Generate random features for demo mode.
     # Replace normed_features with your feature vector
@@ -63,20 +80,33 @@ def compute_normal_histograms(normal_cloud):
         norm_y_vals.append(norm_component[1])
         norm_z_vals.append(norm_component[2])
 
-    nbins = 32
+    nbins = 12
     bins_range = (0, 256)
+    # print(norm_x_vals)
 
     # TODO: Compute histograms of normal values (just like with color)
-    ch1_hist = np.histogram(norm_x_vals, bins=nbins, range=bins_range)
-    ch2_hist = np.histogram(norm_y_vals, bins=nbins, range=bins_range)
-    ch3_hist = np.histogram(norm_z_vals, bins=nbins, range=bins_range)
+    ch1_hist = np.histogram(norm_x_vals, bins=nbins) # , range=bins_range
+    ch2_hist = np.histogram(norm_y_vals, bins=nbins)
+    ch3_hist = np.histogram(norm_z_vals, bins=nbins)
+
+    # print("compute normals")
 
     # TODO: Concatenate and normalize the histograms
     hist_features = np.concatenate((ch1_hist[0], ch2_hist[0], ch3_hist[0]))
     normed_features = hist_features / np.sum(hist_features)
+
+    # print('normal features = ', normed_features)
 
     # Generate random features for demo mode.
     # Replace normed_features with your feature vector
     # normed_features = np.random.random(96)
 
     return normed_features
+
+
+def extract_features(cloud, using_hsv=True):
+    chists = compute_color_histograms(cloud, using_hsv=using_hsv)
+    normals = get_normals(cloud)
+    nhists = compute_normal_histograms(normals)
+    feature = np.concatenate((chists, nhists))
+    return feature

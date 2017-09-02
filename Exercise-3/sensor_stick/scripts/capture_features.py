@@ -8,6 +8,7 @@ from sensor_stick.training_helper import spawn_model
 from sensor_stick.training_helper import delete_model
 from sensor_stick.training_helper import initial_setup
 from sensor_stick.training_helper import capture_sample
+from sensor_stick.features import extract_features
 from sensor_stick.features import compute_color_histograms
 from sensor_stick.features import compute_normal_histograms
 from sensor_stick.srv import GetNormals
@@ -36,10 +37,14 @@ if __name__ == '__main__':
     initial_setup()
     labeled_features = []
 
+    capture_samples = 1500
+
+    cnt = 0
+
     for model_name in models:
         spawn_model(model_name)
 
-        for i in range(5):
+        for i in range(capture_samples):
             # make five attempts to get a valid a point cloud then give up
             sample_was_good = False
             try_count = 0
@@ -55,14 +60,20 @@ if __name__ == '__main__':
                     sample_was_good = True
 
             # Extract histogram features
-            chists = compute_color_histograms(sample_cloud, using_hsv=False)
-            normals = get_normals(sample_cloud)
-            nhists = compute_normal_histograms(normals)
-            feature = np.concatenate((chists, nhists))
-            labeled_features.append([feature, model_name])
+            # chists = compute_color_histograms(sample_cloud, using_hsv=True)
+            # normals = get_normals(sample_cloud)
+            # nhists = compute_normal_histograms(normals)
+            # feature = np.concatenate((chists, nhists))
+
+            feature = extract_features(sample_cloud, using_hsv=True)
+            # print('feature =', feature)
+            labeled_features.append([feature, model_name, 0])
+
+            cnt += 1
+
+            print 'captured ', cnt, ' of ', len(models) * capture_samples
 
         delete_model()
 
 
     pickle.dump(labeled_features, open('training_set.sav', 'wb'))
-

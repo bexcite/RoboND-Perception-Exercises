@@ -7,6 +7,7 @@ from sklearn import svm
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn import cross_validation
 from sklearn import metrics
+from sensor_stick.features import extract_features
 
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
@@ -41,14 +42,25 @@ training_set = pickle.load(open('training_set.sav', 'rb'))
 # Format the features and labels for use with scikit learn
 feature_list = []
 label_list = []
+cloud_list = []
 
 for item in training_set:
     if np.isnan(item[0]).sum() < 1:
         feature_list.append(item[0])
         label_list.append(item[1])
+        cloud_list.append(item[2])
 
 print('Features in Training Set: {}'.format(len(training_set)))
 print('Invalid Features in Training set: {}'.format(len(training_set)-len(feature_list)))
+
+print 'feature_list[0] = ', feature_list[0]
+# print 'extracted_features[0] = ', extract_features(cloud_list[0], using_hsv=True)
+
+# print 'Extract features from clouds ...'
+# for i in range(len(feature_list)):
+#     feature_list[i] = extract_features(cloud_list[i], using_hsv=True)
+#     print i, '...'
+# print 'feature_list[0] = ', feature_list[0]
 
 X = np.array(feature_list)
 # Fit a per-column scaler
@@ -73,7 +85,7 @@ kf = cross_validation.KFold(len(X_train),
 # Perform cross-validation
 scores = cross_validation.cross_val_score(cv=kf,
                                          estimator=clf,
-                                         X=X_train, 
+                                         X=X_train,
                                          y=y_train,
                                          scoring='accuracy'
                                         )
@@ -83,7 +95,7 @@ print('Accuracy: %0.2f (+/- %0.2f)' % (scores.mean(), 2*scores.std()))
 # Gather predictions
 predictions = cross_validation.cross_val_predict(cv=kf,
                                           estimator=clf,
-                                          X=X_train, 
+                                          X=X_train,
                                           y=y_train
                                          )
 
@@ -99,6 +111,7 @@ class_names = encoder.classes_.tolist()
 clf.fit(X=X_train, y=y_train)
 
 model = {'classifier': clf, 'classes': encoder.classes_, 'scaler': X_scaler}
+
 
 # Save classifier to disk
 pickle.dump(model, open('model.sav', 'wb'))
